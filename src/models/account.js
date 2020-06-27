@@ -1,29 +1,22 @@
 import mongoose from 'mongoose';
 
-const accountSchema = mongoose.Schema({
-  agencia: {
-    type: Number,
-    required: true,
-  },
+const accountSchema = new mongoose.Schema({
+  agencia: Number,
   conta: {
-    type: String,
-    default: 10000,
-    required: true,
-  },
-  name: {
-    type: String,
+    type: Number,
     required: true,
   },
   balance: {
     type: Number,
-    default: 0,
     required: true,
+    min: 0,
     validate(value) {
       if (value < 0) {
         throw new Error('Cannot insert negative values for grades');
       }
     },
   },
+  name: String,
 });
 
 mongoose.model('account', accountSchema, 'account');
