@@ -1,5 +1,6 @@
 import express from 'express';
 import accountModel from '../models/account.js';
+import accountController from '../controller/account.controller.js';
 
 const accountsRouter = express();
 
@@ -16,13 +17,7 @@ accountsRouter.put('/account/deposit', async (req, res) => {
   try {
     const { agencia, conta, value } = req.body;
 
-    const account = await accountModel.findOneAndUpdate(
-      { conta, agencia },
-      { $inc: { balance: value } },
-      {
-        new: true,
-      }
-    );
+    const account = await accountController.deposit(agencia, conta, value);
 
     if (!account) {
       res
@@ -41,21 +36,14 @@ accountsRouter.put('/account/deposit', async (req, res) => {
 accountsRouter.put('/account/withdraw', async (req, res) => {
   try {
     const { agencia, conta, value } = req.body;
-    const tax = 1;
 
-    let account = await accountModel.findOne({ conta, agencia });
-
+    let account = await accountController.withdraw(agencia, conta, value);
     if (!account) {
       res
         .status(404)
         .send({ error: 'No account could be found with this criteria' });
     }
 
-    if (account.balance < value + tax) {
-      res.status(400).send({ error: 'Not enough balance for this operation' });
-    }
-    account.balance -= value + tax;
-    account.save();
     res.send(account);
   } catch (error) {
     res.status(500).send({ error: error.message });
@@ -65,7 +53,9 @@ accountsRouter.put('/account/withdraw', async (req, res) => {
 accountsRouter.get('/account/show', async (req, res) => {
   try {
     const { conta, agencia } = req.body;
-    const account = await accountModel.findOne({ conta, agencia });
+
+    const account = accountController.show(conta, agencia);
+
     if (!account) {
       res
         .status(404)
