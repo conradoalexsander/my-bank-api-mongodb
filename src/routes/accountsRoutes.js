@@ -173,4 +173,18 @@ accountsRouter.get(
   }
 );
 
+accountsRouter.get('/account/transfer-to-private', async (req, res) => {
+  try {
+    const transferToPrivate = await accountController.transferToPrivate();
+
+    if (!transferToPrivate) {
+      res.status(404).send({ error: 'No accounts could be found ' });
+    }
+
+    res.send(transferToPrivate);
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
 export default accountsRouter;

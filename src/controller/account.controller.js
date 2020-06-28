@@ -100,19 +100,16 @@ const accountController = (() => {
   };
 
   const averageBalanceInAgency = async (agencia) => {
-    const accountsInAgency = await accountModel.find({ agencia });
+    const accountsInAgency = await accountModel.aggregate([
+      { $match: { agencia: Number(agencia) } },
+      { $group: { _id: null, total: { $avg: '$balance' } } },
+    ]);
 
     if (accountsInAgency.length <= 0) {
       return null;
     }
 
-    const average =
-      accountsInAgency.reduce((acc, account) => {
-        console.log(account);
-        return acc + account.balance;
-      }, 0) / accountsInAgency.length;
-
-    return { agencia: agencia, saldo_medio: average.toFixed(2) };
+    return accountsInAgency;
   };
 
   const lowestBalances = async (quantity) => {
@@ -137,11 +134,41 @@ const accountController = (() => {
     return accounts;
   };
 
-  // const transferToPrivate = async () => {
-  //   let accounts = await accountModel.aggregate([
-  //     { $match: { agencia: '$agencia' } },
-  //   ]);
-  // };
+  const transferToPrivate = async () => {
+    let accountsInAgency = await accountModel.aggregate([
+      { $sort: { agencia: 1, balance: -1 } },
+      {
+        $group: {
+          _id: '$agencia',
+          acc: {
+            $first: {
+              conta: '$conta',
+              agencia: '$agencia',
+              balance: '$balance',
+            },
+          },
+        },
+      },
+    ]);
+
+    if (accountsInAgency.length == 0) {
+      return null;
+    }
+
+    accountsInAgency.forEach(async (account) => {
+      await accountModel.findOneAndUpdate(
+        { conta: account.acc.conta, agencia: account.acc.agencia },
+        { $set: { agencia: 99 } },
+        {
+          new: true,
+        }
+      );
+    });
+
+    accountsInAgency = await listActiveAccountsInAgency(99);
+
+    return accountsInAgency;
+  };
 
   return {
     deposit,
@@ -153,6 +180,7 @@ const accountController = (() => {
     averageBalanceInAgency,
     lowestBalances,
     highestBalances,
+    transferToPrivate,
   };
 })();
 
