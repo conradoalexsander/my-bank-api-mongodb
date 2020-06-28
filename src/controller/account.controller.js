@@ -33,15 +33,15 @@ const accountController = (() => {
     return account;
   };
 
-  // const destroy = async (conta, agencia) => {
-  //   const account = await accountModel.findOneAndDelete({ conta, agencia });
+  const destroy = async (conta, agencia) => {
+    const account = await accountModel.findOneAndDelete({ conta, agencia });
 
-  //   if (!account || account == null) {
-  //     return null;
-  //   }
+    if (!account || account == null) {
+      return null;
+    }
 
-  //   return account;
-  // };
+    return account;
+  };
 
   const listActiveAccountsInAgency = async (agencia) => {
     const accounts = await accountModel.find({ agencia });
@@ -102,14 +102,19 @@ const accountController = (() => {
   const averageBalanceInAgency = async (agencia) => {
     const accountsInAgency = await accountModel.aggregate([
       { $match: { agencia: Number(agencia) } },
-      { $group: { _id: null, total: { $avg: '$balance' } } },
+      { $group: { _id: '$agencia', media: { $avg: '$balance' } } },
     ]);
 
     if (accountsInAgency.length <= 0) {
       return null;
     }
 
-    return accountsInAgency;
+    const averageBalance = {
+      agencia,
+      media: accountsInAgency[0].media.toFixed(2),
+    };
+
+    return averageBalance;
   };
 
   const lowestBalances = async (quantity) => {
@@ -174,7 +179,7 @@ const accountController = (() => {
     deposit,
     withdraw,
     show,
-    //destroy,
+    destroy,
     listActiveAccountsInAgency,
     doTransferAccounts,
     averageBalanceInAgency,

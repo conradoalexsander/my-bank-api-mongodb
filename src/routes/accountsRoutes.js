@@ -54,7 +54,7 @@ accountsRouter.get('/account/show', async (req, res) => {
   try {
     const { conta, agencia } = req.body;
 
-    const account = accountController.show(conta, agencia);
+    const account = await accountController.show(conta, agencia);
 
     if (!account) {
       res
@@ -73,7 +73,7 @@ accountsRouter.delete('/account/destroy', async (req, res) => {
   try {
     const { conta, agencia } = req.body;
 
-    const account = await accountModel.findOneAndDelete({ conta, agencia });
+    let account = await accountController.destroy(conta, agencia);
 
     if (!account) {
       res
@@ -83,7 +83,7 @@ accountsRouter.delete('/account/destroy', async (req, res) => {
 
     const accounts = await accountModel.find({ agencia });
 
-    res.send({ active_accounts: accounts.length });
+    res.send({ agencia, active_accounts: accounts.length });
   } catch (error) {
     res.status(500).send({ error: error.message });
   }
